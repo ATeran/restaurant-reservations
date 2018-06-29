@@ -7,17 +7,11 @@
 
 ## Workflow:
 #### 1. Data Preparation and EDA
-  - Initial intuitions
-  - Convert categorical data to dummy variables
 
 #### 2. Split Data
-   - Hold out
-   - Train
-   - Test
-   - Standardize x's
 
 #### 3. Fit Linear Regression - Calculate RMSE
-  - On standardized X, y training set.
+
 
 #### 4. Try L1 Regularization - Calculate RMSE
 
@@ -85,7 +79,24 @@ TFI has provided a dataset with 137 restaurants in the training set, and a test 
   - Changing alpha levels had almost no effect on the model's RMSE
 
 #### 5. Manually Engineer Features - Calculate RMSE
-- Review of the assumptions for linear regression:
+##### Review Assumptions of Linear Regression
+- **Linearity**
+  - Is the relationship between the features and the outcome variable linear? 
+- **Normality**
+  - Are the errors normally distributed?
+- **Homoscedasticity**
+  - Is the error variance constant?
+- **Independence**
+  - Are the errors associated with one observation correlated with the errors of another?
+- **Errors in variables**
+  - Are the feature variables measured without error?
+- **Model specification**
+  - Are relevant features included? Are irrelevant features excluded?
+- **Influence**
+  - Are there individual data points exerting undue influence on the coefficients?
+- **Collinearity**
+  - Are there features that are highly collinear?
+
 - PART 1: Detect influence, and outliers
 
 ##### Multicollinearity
