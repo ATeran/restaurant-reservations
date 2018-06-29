@@ -44,7 +44,7 @@ TFI has provided a dataset with 137 restaurants in the training set, and a test 
   - This leaves me with 50 columns, 137 rows.
   - "Revenue" mean ≈ 4.5 M
   - Begin to build a pipeline for data processing.
-  - **Initial inspection suggest highly variable data**
+  - **Initial inspection suggests highly collinear data**
 ![VIFS](images/vifs.png)
   - Move forward, fully expecting high multicollinearity problems.
   - See if an L1 regularization can solve some problems.
