@@ -15,6 +15,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from src.utils import XyScaler
 from sklearn.base import clone
+from statsmodels.graphics.regressionplots import *
 
 
 # Workflow:
@@ -115,7 +116,7 @@ def plot_vifs(df):
     ax.set_xticklabels(features_sorted, rotation='90')
     ax.axhline(10, color='blue')
 
-    return plt.show()
+    return plt.savefig('vifs.png')
 
 # plot_vifs(X)
 
@@ -128,40 +129,47 @@ scaler = StandardScaler()
 scaler2 = StandardScaler()
 # scaler.fit(X_train, X_test) ## WTF? did I fuck this up? I think so, but it still works, since I'm not using y transformed.
 scaler.fit(X_train, y_train.values.reshape(-1,1))
-X_train_std, y_train_std = scaler.transform(X_train, y_train.values.reshape(-1,1))
+X_train_std = scaler.transform(X_train)
 X_train_std = pd.DataFrame(X_train, columns=X_train.columns)
-X_test_std, y_test_std = scaler.transform(X_test, y_test.values.reshape(-1,1))
+X_test_std = scaler.transform(X_test)
 X_test_std = pd.DataFrame(X_test, columns=X_test.columns)
-scaler2.fit(X_hold_out, y_hold_out.values.reshape(-1,1))
-X_hold_out_std, y_hold_out_std = scaler2.transform(X_hold_out, y_hold_out.values.reshape(-1,1))
+scaler2.fit(X_hold_out)
+X_hold_out_std = scaler2.transform(X_hold_out)
 X_hold_out_std = pd.DataFrame(X_hold_out, columns=X_hold_out.columns)
 # X_hold_out_std = pd.DataFrame(scaler.transform(X_hold_out), columns=X_hold_out.columns)
 
 
 standardized = pd.concat([pd.DataFrame(X_train_std, columns=X_train.columns), y_train], axis=1)
 # Next, fit a linear model on the training data
-vanilla_lm = smf.ols(formula = "revenue ~ p1 + p2 + p3 + p4+ p5 + p6 + p7 + p8 + p10 + p11 + p12 + p14 + p15 + p16 + p17 + p18 + p19 + p20 + p21 + p22 + p23 + p24 + p25 + p26 + p27 + p28 + p29 + p30 + p31 + p32 + p34 + p35 + p36 + p37 + date_delta + cat_fc + cat_il + cat_other + cat_5 + cat_8 + cat_10 + cat_4_0 + cat_5_0 + cat_6_0 + cat_7_5 + cat_2 + cat_3 + cat_4 + cat_5 + cat_6", data = standardized).fit()
+vanilla_lm = smf.ols(formula = "revenue ~ p1 + p2 + p3 + p4+ p5 + p6 + p7 + p8 + p10 + p11 + p12 + p14 + p15 + p16 + p17 + p18 + p19 + p20 + p21 + p22 + p23 + p24 + p25 + p26 + p27 + p28 + p29 + p30 + p31 + p32 + p33 + p34 + p35 + p36 + p37 + date_delta + cat_fc + cat_il + cat_other + cat_5 + cat_8 + cat_10 + cat_4_0 + cat_5_0 + cat_6_0 + cat_7_5 + cat_2 + cat_3 + cat_4 + cat_5 + cat_6", data = standardized).fit()
+removed_lm = smf.ols(formula = "revenue ~ p8 + p11 + p17 + p22 + p26 + p27 + p28 + p29 + p30 + p35 + p37 + date_delta + cat_fc + cat_il + cat_other + cat_5 + cat_8 + cat_10 + cat_4_0 + cat_5_0 + cat_6_0 + cat_7_5 + cat_2 + cat_3 + cat_4 + cat_5 + cat_6", data = standardized).fit()
 vanilla_rmse = np.sqrt(mse(y_test, vanilla_lm.predict(X_test_std)))
 # 35054027.17   Not too good.
-
+removed_rmse = np.sqrt(mse(y_test, removed_lm.predict(X_test_std)))
+# 1739181.46
 vanilla_sklm = LinearRegression().fit(X_train_std, y_train)
 vanilla_sklm.score(X_test_std, y_test)
 # -1.71
 # This means that picking any random line will be better than the prediction.
 # My model was super overfit because the
+removed_sklm = LinearRegression().fit(X_train_std, y_train)
+removed_sklm.score(X_test_std, y_test)
+# .008  Better!
+
 
 
 ## NOW LET's Try to improve on that RMSE!
 fig,ax = plt.subplots(figsize=(10,10))
-ax.plot([0,10000000], [0,10000000], "k-")
+# ax.plot([0,10000000], [0,10000000], "k-")
 ax.scatter(LinearRegression().fit(X_train_std, y_train).predict(X_test_std), y_test)
 ax.set_xlabel('Predicted')
 ax.set_ylabel('Actual')
+plt.show()
 plt.savefig('predicted_xaxis__vs_actual_yaxis_vanilla_lm.png');
 
 def cv(X, y, base_estimator, n_folds, random_seed=154):
     '''
-    Credit for this code goes to dsi-solns-71 ! Nice job dsi-solns-71!
+    Credit for this code goes to dsi-solns-71! Nice job dsi-solns-71!
     '''
     kf = KFold(n_splits=n_folds, random_state=random_seed)
     test_cv_errors, train_cv_errors = np.empty(n_folds), np.empty(n_folds)
@@ -227,7 +235,8 @@ ax.axvline(np.log10(lasso_optimal_alpha), color='grey')
 ax.set_title("LASSO Regression Train and Test MSE")
 ax.set_xlabel(r"$\log(\alpha)$")
 ax.set_ylabel("MSE")
-plt.savefig('lasso_optimal_alpha')
+# plt.show()
+plt.savefig('lasso_optimal_alpha_removed')
 
 
 
@@ -256,6 +265,7 @@ ax.legend(loc='lower right')
 ax.set_title("LASSO Regression, Standardized Coefficient Paths")
 ax.set_xlabel(r"$\log(\alpha)$")
 ax.set_ylabel("Standardized Coefficient")
+# plt.show()
 plt.savefig('LASSO_stdized_coeff_paths_initial')
 
 lass_mod_initial = Lasso(alpha=.01, tol=.3)
@@ -263,8 +273,9 @@ lass_mod_initial.fit(X_train_std, y_train)
 LASSO_rmse_initial = np.sqrt(mse(y_test, lass_mod_initial.predict(X_test_std)))
 # 1725592.21
 
-lass_mod_initial.score(X_train_std, y_test)
+lass_mod_initial.score(X_test_std, y_test)
 # 0.22
+
 
 fig,ax = plt.subplots(figsize=(10,10))
 ax.plot([0,10000000], [0,10000000], "k-")
@@ -276,41 +287,102 @@ plt.savefig('LASSO_model_prediction')
 
 lass_mod_initial.score(X_test_std, y_test)
 lass_mod_initial.score(X_hold_out, y_hold_out)
-# Absolute bullshit code to get initial plots and check for correlation...
-# ex = X
-# y = y
-# set1 = ex.iloc[:, 0:5]
-# set2 = ex.iloc[:, 6:10]
-# set3 = ex.iloc[:, 11:15]
-# set4 = ex.iloc[:, 16:20]
-# set5 = ex.iloc[:, 21:25]
-# set6 = ex.iloc[:, 26:30]
-#
-# set1['revenue'] = y
-# set2['revenue'] = y
-# set3['revenue'] = y
-# set4['revenue'] = y
-# set5['revenue'] = y
-# set6['revenue'] = y
-#
-# scatter(set1)
-# plt.show()
-# scatter(set2)
-# plt.show()
-# scatter(set3)
-# plt.show()
-# scatter(set4)
-# plt.show()
-# scatter(set5)
-# plt.show()
-# scatter(set6)
-# plt.show()
 
 
-# Nothing stands out as particularly correlated with revenue. A few of the features seem correlated though:
-# (p1 & p2), (p24 & p26), (p25 & p26), (p24 & p25)
+#### Now for manual feature engineering and outlier removal
 
-# Check for heteroscedasticity:
-#
-#
-# X = PCA(whiten=True, n_components=15).fit_transform(X)
+#PART 1: Detect influence, and outliers
+
+scaler3 = StandardScaler()
+scaler3.fit(X)
+X_std = scaler3.transform(X)
+
+standardized = pd.concat([X, y], axis=1)
+lm = smf.ols(formula = "revenue ~ p1 + p2 + p3 + p4+ p5 + p6 + p7 + p8 + p10 + p11 + p12 + p14 + p15 + p16 + p17 + p18 + p19 + p20 + p21 + p22 + p23 + p24 + p25 + p26 + p27 + p28 + p29 + p30 + p31 + p32 + p34 + p35 + p36 + p37 + date_delta + cat_fc + cat_il + cat_other + cat_5 + cat_8 + cat_10 + cat_4_0 + cat_5_0 + cat_6_0 + cat_7_5 + cat_2 + cat_3 + cat_4 + cat_5 + cat_6", data = standardized).fit()
+
+influence = lm.get_influence()
+resid_student = influence.resid_studentized_external
+(cooks, p) = influence.cooks_distance
+(dffits, p) = influence.dffits
+leverage = influence.hat_matrix_diag
+print('\n')
+print('Leverage v.s. Studentized Residuals')
+sns.regplot(leverage, lm.resid_pearson, fit_reg=False)
+plt.savefig('Leverage vs Studentized Residuals')
+
+stand_1res = pd.concat([pd.Series(cooks, name = "cooks"), pd.Series(dffits, name = "dffits"), pd.Series(leverage, name = "leverage"), pd.Series(resid_student, name = "resid_student")], axis = 1)
+stand_1res = pd.concat([standardized, stand_1res], axis = 1)
+
+r = stand_1res.resid_student
+print('-'*30 + ' studentized residual ' + '-'*30)
+print(r.describe())
+print('\n')
+
+r_sort = stand_1res.sort_values(by= 'resid_student')
+print('-'*30 + ' top 5 most negative residuals ' + '-'*30)
+print(r_sort.head())
+print('\n')
+
+print('-'*30 + ' top 5 most positive residuals ' + '-'*30)
+print(r_sort.tail())
+
+# Resids to be dropped
+print(standardized[abs(r) > 2])
+
+#16, 64, 75, 99, 112
+
+# Generally, a point with leverage greater than (2k+2)/n should be carefully examined,
+# where k is the number of predictors and n is the number of observations.
+# In my case this works out to (2*51+2)/137 = .7591
+
+leverage = stand_1res.leverage
+print('-'*30 + ' Leverage ' + '-'*30)
+print(leverage.describe())
+print('\n')
+
+leverage_sort = stand_1res.sort_values(by= 'leverage', ascending=False)
+print('-'*30 + ' top 15 highest leverage data points ' + '-'*30)
+print(leverage_sort.head(15))
+
+resid_rows_to_discard = {16, 64, 75, 99, 112, 116} # Count = 6
+leverage_rows_to_discard = {124, 122, 71, 3, 15, 118, 125, 110, 78, 74, 115, 64, 45}
+drop_influencers = standardized.drop(standardized.index[[16, 64, 75, 99, 112, 116, 124, 122, 71, 3, 15, 118, 125, 110, 78, 74, 115, 45]])
+
+
+from statsmodels.graphics.regressionplots import *
+plot_leverage_resid2(lm)
+plt.savefig('Leverage_vs_normalized_residuals_squared')
+
+influence_plot(lm)
+plt.savefig('influence_plot')
+
+## PART 2 Normality of Residuals
+
+stand_2res = pd.concat([standardized, pd.Series(lm.resid, name = 'resid'), pd.Series(lm.predict(), name = "predict")], axis = 1)
+sns.kdeplot(np.array(stand_2res.resid), bw=10)
+sns.distplot(np.array(stand_2res.resid), hist=False)
+plt.savefig('KDE_vs_distplot')
+
+## qq plot
+import pylab
+import scipy.stats as scipystats
+scipystats.probplot(stand_2res.resid, dist="norm", plot=pylab)
+pylab.savefig('qqplot')
+
+
+# Plot of the distribution of the residuals:
+resid3 = lm.resid
+plt.scatter(lm.predict(), resid3)
+plt.savefig('heteroscedasticity')
+
+lm5 = smf.ols(formula = "revenue ~ p1 + p2 + p3 + p4+ p5 + p6 + p7 + p8 + p10 + p11 + p12 + p14 + p15 + p16 + p17 + p18 + p19 + p20 + p21 + p22 + p23 + p24 + p25 + p26 + p27 + p28 + p29 + p30 + p31 + p32 + p34 + p35 + p36 + p37 + date_delta + cat_fc + cat_il + cat_other + cat_5 + cat_8 + cat_10 + cat_4_0 + cat_5_0 + cat_6_0 + cat_7_5 + cat_2 + cat_3 + cat_4 + cat_5 + cat_6", data = drop_influencers).fit()
+resid5 = lm5.resid
+plt.scatter(lm5.predict(), resid5)
+plt.savefig('hetero_dropped_influencers')
+
+
+## Now to test for Multicollinearity:
+dropped_vifs_and_influencers = drop_influencers.drop(['p21', 'p23', 'p33', 'p6', 'p31', 'p15', 'p32', 'p18', 'p2', 'p16', 'p4', 'p9', 'p5', 'p20', 'p14', 'p19', 'p25', 'p24', 'p7', 'p1', 'p3', 'p34', 'p36', 'p12', 'p13', 'p10'], axis=1)
+dropped_vifs_and_influencers.to_pickle('dropped_vifs_and_influencers.pkl')
+
+## Now to run the whole pipeline agin with the modified set of data (outliers removed).
