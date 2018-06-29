@@ -141,12 +141,21 @@ X_hold_out_std = pd.DataFrame(X_hold_out, columns=X_hold_out.columns)
 
 standardized = pd.concat([pd.DataFrame(X_train_std, columns=X_train.columns), y_train], axis=1)
 # Next, fit a linear model on the training data
-vanilla_lm = smf.ols(formula = "revenue ~ p1 + p2 + p3 + p4+ p5 + p6 + p7 + p8 + p10 + p11 + p12 + p14 + p15 + p16 + p17 + p18 + p19 + p20 + p21 + p22 + p23 + p24 + p25 + p26 + p27 + p28 + p29 + p30 + p31 + p32 + p33 + p34 + p35 + p36 + p37 + date_delta + cat_fc + cat_il + cat_other + cat_5 + cat_8 + cat_10 + cat_4_0 + cat_5_0 + cat_6_0 + cat_7_5 + cat_2 + cat_3 + cat_4 + cat_5 + cat_6", data = standardized).fit()
+vanilla_lm = smf.ols(formula = "revenue ~ p1 + p2 + p3 + p4+ p5 + p6 + p7 + p8 + p10 + p11 + p12 + p14 + p15 + p16 + p17 + p18 + p19 + p20 + p21 + p22 + p23 + p24 + p25 + p26 + p27 + p28 + p29 + p30 + p31 + p32 + p34 + p35 + p36 + p37 + date_delta + cat_fc + cat_il + cat_other + cat_5 + cat_8 + cat_10 + cat_4_0 + cat_5_0 + cat_6_0 + cat_7_5 + cat_2 + cat_3 + cat_4 + cat_5 + cat_6", data = standardized).fit()
 removed_lm = smf.ols(formula = "revenue ~ p8 + p11 + p17 + p22 + p26 + p27 + p28 + p29 + p30 + p35 + p37 + date_delta + cat_fc + cat_il + cat_other + cat_5 + cat_8 + cat_10 + cat_4_0 + cat_5_0 + cat_6_0 + cat_7_5 + cat_2 + cat_3 + cat_4 + cat_5 + cat_6", data = standardized).fit()
+most_important_lm = smf.ols(formula = "revenue ~ cat_4 + cat_fc + cat_il + date_delta + p15 + p20 + p25 + p26 + p28 + p30 + p31 + p32 + p36 + p6 + p8", data = standardized).fit()
 vanilla_rmse = np.sqrt(mse(y_test, vanilla_lm.predict(X_test_std)))
-# 35054027.17   Not too good.
+# 9618417.64   Not too good.
+# r^2 = .625
+# adj_r^2 = .151
 removed_rmse = np.sqrt(mse(y_test, removed_lm.predict(X_test_std)))
-# 1739181.46
+# 3446606.45
+# r^2 = .399
+# adj_r^2 = .138
+most_important_rmse = np.sqrt(mse(y_test, most_important_lm.predict(X_test_std)))
+# 2321454.89
+# r^2 = .375
+# adj_r^2 = .243
 vanilla_sklm = LinearRegression().fit(X_train_std, y_train)
 vanilla_sklm.score(X_test_std, y_test)
 # -1.71

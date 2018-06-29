@@ -48,6 +48,7 @@ TFI has provided a dataset with 137 restaurants in the training set, and a test 
 ##### My Approach
   - Clean and convert categorical features.
   - This leaves me with 50 columns, 137 rows.
+  - "Revenue" mean ≈ 4.5 M
   - Begin to build a pipeline for data processing.
   - **Initial inspection suggest highly variable data**
 ![VIFS](images/vifs.png)
@@ -57,7 +58,7 @@ TFI has provided a dataset with 137 restaurants in the training set, and a test 
 #### 2. Split Data
 - Hold out: 28 rows
 - Training: 87 rows
-- Test: 22
+- Test: 22 rows
 - Standardize the features
 - Extremely varying results based on how the data was split.
 
@@ -68,6 +69,8 @@ TFI has provided a dataset with 137 restaurants in the training set, and a test 
 ![vanilla_lm](images/predicted_xaxis__vs_actual_yaxis_vanilla_lm.png)
 
 #### 4. Try L1 Regularization - Calculate RMSE
+![lasso_mathl](images/lasso_math.png)
+
 - Borrow code from some genius' repo I found on github: dsi-solns-71
 ![lasso_optimal](images/lasso_optimal_alpha.png)
 ![lasso_optimal](images/LASSO_stdized_coeff_paths_initial.png)
@@ -79,9 +82,43 @@ TFI has provided a dataset with 137 restaurants in the training set, and a test 
 - Although this seems like an enormous prediction improvement, there were some seriously concerning factors:
   - The variation in the relative improvement
   - The 'convergence errors' and tolerance levels
-  - The 
+  - Changing alpha levels had almost no effect on the model's RMSE
 
-### To improve, unsolved mysteries
+#### 5. Manually Engineer Features - Calculate RMSE
+- Review of the assumptions for linear regression:
+- PART 1: Detect influence, and outliers
+
+##### Multicollinearity
+
+![VIFS](images/vifs.png)
+
+##### Outliers And Leverage Points
+![influence plot](images/influence_plot.png)
+
+![leverage plot](images/Leverage vs Studentized Residuals.png)
+
+![normed_resid plot](images/Leverage_vs_normalized_residuals_squared.png)
+
+
+
+##### Normality of Residuals
+![KDE-dist plot](images/KDE_vs_distplot.png)
+
+![qq plot](images/qqplot.png)
+
+##### Which points to remove?
+- Generally, we can take a threshold for a studentized residual of abs(2).
+- A point with leverage greater than (2k+2)/n should be carefully examined, where k is the number of predictors and n is the number of observations.In my case this works out to (2*51+2)/137 = .7591
+- Finally: **Dropped** 22/137 Rows. **Dropped** 22/50 Columns.
+- Alternative: Recursive Feature Selection: Maintain 15 most "important" features.  
+
+#### Re-fit Models:
+- Initial Linear RMSE ≈ 35 M
+- Removed Influencers Linear RMSE ≈ 1.8 M
+- Initial LASSO RMSE ≈ 1.7 M
+- Removed Influencers LASSO RMSE ≈ - 1.6 M ?
+
+### To Improve / Unsolved Mysteries
 -  I wouldn't have a hold out set. While, it seems like a great idea, you need to get rid of outliers first!
 - Recursive feature model_selection
 - Get K-Fold to work
